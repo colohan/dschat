@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+  <head>
+    <script src="https://code.jquery.com/jquery-3.1.0.min.js"></script>
+    <!-- Google's channel API, used by the dripper to receive messages as they
+      -- come in: -->
+    <script src='/_ah/channel/jsapi'></script>
+    <script>
+      var token = '{{ token }}';
+    </script>
+    <script src='js/dripper.js'></script>
+
+    <link type="image/x-icon" rel="shortcut icon" href="/public/z16.ico" />
+    <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
+  </head>
+
+  <body>
+    {% for message in messages %}
+    <div class="message" data-messageid="{{ message.id|safe }}">
+    <b title="{{ message.email|safe }}">{{ message.nickname|safe }}
+      ({{ message.topic|safe }}) [{{ message.date|safe }}]
+    </b>
+    <blockquote>{{ message.content|safe }}</blockquote>
+    </div>
+    {% endfor %}
+
+    <form action="/send" method="post" id="messageForm" onsubmit="postForm(this); document.getElementById('content').value=''; return false;">
+      Topic: <input value="{{ topic }}" name="topic" id="topic">
+      <div><textarea name="content" id="content" rows="3" cols="60"
+      onkeydown="return onKeyDown(event)"></textarea></div>
+      <div><input type="submit" value="Send"></div>
+    </form>
+
+    <hr>
+    <form action="/search" method="post">
+      Query: <input value="{{ query }}" name="query" size="60">
+      Max results: <input type="number" value="10"
+			  name="num_results" size="4">
+      <div><input type="submit" value="Search"></div>
+    </form>
+    <hr>
+    <br>Queries can use the full syntax of
+    the <a href="https://cloud.google.com/appengine/docs/python/search/query_strings">Search
+      API</a>.
+    <br>Example queries: [author:colohan] [topic:chat AND burritos]
+    [email:president] [date >= 2000-12-31] [content:"distributed tacos"]
+  </body>
+</html>
+{% endautoescape %}

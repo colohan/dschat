@@ -1,0 +1,33 @@
+Things I should get around to doing someday:
+
+- Fix bug that renders line breaks properly in javascript but not django
+
+- Create an authorized users table, and some way of either restricting the chat
+  to only class members, or to block spammers.
+  
+- Create admin interface for adding authorized users.
+
+- When displaying source code, display in monospace font for better formatting.
+
+- When displaying a URL, turn it into a link.
+
+- Make it obvious which messages are new since you last looked at the chat
+  window.
+
+- Update title bar of window to reflect how much unread content there is.
+
+- Display timezone-aware times, not just times in the server's time zone.
+
+- Allow a user to filter out topics they don't care to converse about.
+
+- Allow a user to click on a message and zoom in on just that topic, to make it
+  easier to follow a thread of conversation.
+
+- Allow users to post on a special topic named "ephemeral".  Such messages will
+  not be stored on the server -- they will just be broadcast to whoever has the
+  UI open and receiving messages right now.
+
+- Figure out why after a while the connection from server to client goes down
+  and doesn't come back until you reload the page.
+
+- Possible idea:  provide ability to send private messages between users.

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+  <head>
+    <link type="image/x-icon" rel="shortcut icon" href="/public/z16.ico" />
+    <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
+  </head>
+
+  <body>
+    <form action="/search" method="post">
+      Query: <input value="{{ query }}" name="query" size="60">
+      Max results: <input type="number" value="{{ num_results }}"
+			  name="num_results" size="4">
+      <div><input type="submit" value="Search"></div>
+    </form>
+    {% for result in results %}
+    <b>{{ result.nickname|safe }} ({{ result.email|safe }})
+      ({{ result.topic|safe }}) [{{ result.date|safe }}]
+    </b>
+    <blockquote>{{ result.content|safe }}</blockquote>
+    {% endfor %}
+  </body>
+</html>
+{% endautoescape %}
+
+<hr>
+<br>Queries can use the full syntax of
+the <a href="https://cloud.google.com/appengine/docs/python/search/query_strings">Search
+  API</a>.
+<br>Example queries: [author:colohan] [topic:chat AND burritos] [email:jch]
+[date >= 2000-12-31] [content:"prom date"]
+
+
