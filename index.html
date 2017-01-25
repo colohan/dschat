@@ -3,16 +3,10 @@
 <html>
   <head>
     <script src="https://code.jquery.com/jquery-3.1.0.min.js"></script>
-    <!-- Google's channel API, used by the dripper to receive messages as they
-      -- come in: -->
-    <script src='/_ah/channel/jsapi'></script>
-    <script>
-      var token = '{{ token }}';
-    </script>
-    <script src='js/dripper.js'></script>
+    <script src='{{route_prefix}}/js/dripper.js'></script>
 
-    <link type="image/x-icon" rel="shortcut icon" href="/public/z16.ico" />
-    <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
+    <link type="image/x-icon" rel="shortcut icon" href="{{route_prefix}}/public/z16.ico" />
+    <link type="text/css" rel="stylesheet" href="{{route_prefix}}/stylesheets/main.css" />
 
     <script>
       (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -30,29 +24,32 @@
   <body>
     {% for message in messages %}
     <div class="message" data-messageid="{{ message.id|safe }}">
-    <b title="{{ message.email|safe }}">{{ message.nickname|safe }}
+    <b title="{{ message.email|safe }}">{{ message.name|safe }}
       ({{ message.topic|safe }}) [{{ message.date|safe }}]
     </b>
     <blockquote>{{ message.content|safe }}</blockquote>
     </div>
     {% endfor %}
+    <div class="bottom"></div>
 
-    <form action="/send" method="post" id="messageForm" onsubmit="postForm(this); document.getElementById('content').value=''; return false;">
-      Topic: <input value="{{ topic }}" name="topic" id="topic">
+    <form action="{{route_prefix}}/send" method="post" id="messageForm" onsubmit="postForm(this); document.getElementById('content').value=''; return false;">
+      Name: <input value="{{ name }}" name="name" id="name">
+      <div>Email: <input value="{{ email }}" name="email" id="email">
+      <div>Topic: <input value="{{ topic }}" name="topic" id="topic">
       <div><textarea name="content" id="content" rows="3" cols="60"
       onkeydown="return onKeyDown(event)"></textarea></div>
       <div><input type="submit" value="Send"></div>
     </form>
 
     <hr>
-    <form action="/search" method="post">
+    <form action="{{route_prefix}}/search" method="post">
       Query: <input value="{{ query }}" name="query" size="60">
       Max results: <input type="number" value="10"
 			  name="num_results" size="4">
       <div><input type="submit" value="Search"></div>
     </form>
     <hr>
-    <br>Queries can use the full syntax of
+    <br>Queries can NOT use the full syntax of
     the <a href="https://cloud.google.com/appengine/docs/python/search/query_strings">Search
       API</a>.
     <br>Example queries: [author:colohan] [topic:chat AND burritos]

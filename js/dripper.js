@@ -39,14 +39,15 @@ onMessage = function(m) {
 	var message = messages[i];
 	
 	var html = "<div class=\"message\" data-messageid=\"" + message.id +
-	    "\"><b title=\"" + message.email + "\">" + message.nickname + " (" +
+	    "\"><b title=\"" + message.email + "\">" + message.name + " (" +
             message.topic + ") [" + message.date + "]</b><blockquote>" +
             message.content + "</blockquote></div>";
 
 	// Now we need to figure out where to add this message.  Optimize for
 	// the common cases of it being inserted first or last:
-	if ($(".message").last().attr("data-messageid") < message.id) {
-	    $(".message").last().after(html);
+	if ($(".message").length == 0 ||
+	    $(".message").last().attr("data-messageid") < message.id) {
+	    $(".bottom").last().before(html);
 	    posted_at_bottom = true;
 
 	} else {
@@ -96,14 +97,19 @@ onClose = function() {
 
 // Initialization, called once upon page load:
 openChannel = function() {
-    var channel = new goog.appengine.Channel(token);
-    var handler = {
-        'onopen': onOpen,
-        'onmessage': onMessage,
-        'onerror': onError,
-        'onclose': onClose
-    };
-    var socket = channel.open(handler);
+    var loc = window.location, new_uri;
+    if (loc.protocol === "https:") {
+	new_uri = "wss:";
+    } else {
+	new_uri = "ws:";
+    }
+    new_uri += "//" + loc.host;
+    new_uri += loc.pathname + "/websocket";
+    var s = new WebSocket(new_uri);
+    s.onopen = onOpen;
+    s.onmessage = onMessage;
+    s.onerror = onError;
+    s.onclose = onClose;
 }
 
 fetchMoreMessages = function() {
