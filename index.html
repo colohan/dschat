@@ -22,14 +22,6 @@
   </head>
 
   <body>
-    {% for message in messages %}
-    <div class="message" data-messageid="{{ message.id|safe }}">
-    <b title="{{ message.email|safe }}">{{ message.name|safe }}
-      ({{ message.topic|safe }}) [{{ message.date|safe }}]
-    </b>
-    <blockquote>{{ message.content|safe }}</blockquote>
-    </div>
-    {% endfor %}
     <div class="bottom"></div>
 
     <form action="{{route_prefix}}/send" method="post" id="messageForm" onsubmit="postForm(this); document.getElementById('content').value=''; return false;">
@@ -40,20 +32,6 @@
       onkeydown="return onKeyDown(event)"></textarea></div>
       <div><input type="submit" value="Send"></div>
     </form>
-
-    <hr>
-    <form action="{{route_prefix}}/search" method="post">
-      Query: <input value="{{ query }}" name="query" size="60">
-      Max results: <input type="number" value="10"
-			  name="num_results" size="4">
-      <div><input type="submit" value="Search"></div>
-    </form>
-    <hr>
-    <br>Queries can NOT use the full syntax of
-    the <a href="https://cloud.google.com/appengine/docs/python/search/query_strings">Search
-      API</a>.
-    <br>Example queries: [author:colohan] [topic:chat AND burritos]
-    [email:president] [date >= 2000-12-31] [content:"distributed tacos"]
   </body>
 </html>
 {% endautoescape %}

@@ -81,6 +81,10 @@ onMessage = function(m) {
 
 onOpen = function() {
     console.log("Channel to server opened.");
+
+    if($(".message").length == 0) {
+	fetchMoreMessages();
+    }
 }
 
 onError = function(e) {
@@ -95,6 +99,8 @@ onClose = function() {
     setTimeout(openChannel, 5000);
 }
 
+var websocket;
+
 // Initialization, called once upon page load:
 openChannel = function() {
     var loc = window.location, new_uri;
@@ -105,18 +111,24 @@ openChannel = function() {
     }
     new_uri += "//" + loc.host;
     new_uri += loc.pathname + "/websocket";
-    var s = new WebSocket(new_uri);
-    s.onopen = onOpen;
-    s.onmessage = onMessage;
-    s.onerror = onError;
-    s.onclose = onClose;
+    websocket = new WebSocket(new_uri);
+    websocket.onopen = onOpen;
+    websocket.onmessage = onMessage;
+    websocket.onerror = onError;
+    websocket.onclose = onClose;
 }
 
 fetchMoreMessages = function() {
-    // Send a "get" request back to the server so it provides us with messages
-    // older than last_id:
-    var last_id = $(".message").first().attr("data-messageid")
-    $.post("get", {older_than: last_id});
+    var last_id = $(".message").first().attr("data-messageid");
+    if($(".message").length == 0) {
+	last_id = -1;
+    }
+
+    var request = {
+	first_id: 0,  // Ask for as many messages as we can get
+	last_id: last_id
+    }
+    websocket.send(JSON.stringify(request));
 }
 
 onScroll = function() {
