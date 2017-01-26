@@ -32,9 +32,6 @@ class Message():
     id = 0
     name = DEFAULT_NAME
     email = DEFAULT_EMAIL
-    # Note that the date is the only indexed property.  This is because this
-    # table is only used for displaying the stream of messages, all searches are
-    # done using the Search API:
     date = datetime.MINYEAR
     topic = DEFAULT_TOPIC
     content = ""
@@ -109,10 +106,12 @@ class SendMessage(webapp2.RequestHandler):
 
 
 def handle_request(r, msg):
+    """Handle request for more messages received from websocket."""
+
     request = json.loads(msg)
     first = int(request["first_id"])
     last = int(request["last_id"])
-    # Don't fetch too many messages at once:
+    # Don't fetch more than 50 messages at once:
     if (last > 0 and (last - 50 > first)) or (last < 0):
         first = last - 50
     pickled_messages = r.lrange(REDIS_MESSAGES_KEY, first, last)
@@ -198,8 +197,6 @@ real_app = webapp2.WSGIApplication([
     (ROUTE_PREFIX, MainPage),
     (ROUTE_PREFIX + '/', MainPage),
     (ROUTE_PREFIX + '/send', SendMessage),
-    (ROUTE_PREFIX + '/get', GetMessages),
-    (ROUTE_PREFIX + '/search', SearchPage),
     (ROUTE_PREFIX + '/websocket', WebSocketConnection),
 ], debug=True)
 
@@ -212,8 +209,6 @@ def fake_start_response(unused1, unused2):
 # calling start_response.  This generates an annoying exception.  So we provide
 # a fake start_response to webapp2 for websocket connections only.  (What a
 # gross hack, feel free to tell me a better way...)
-
-
 def app(environ, start_response):
     if environ['PATH_INFO'] == ROUTE_PREFIX + '/websocket':
         return real_app(environ, fake_start_response)
