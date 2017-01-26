@@ -17,7 +17,7 @@ JINJA_ENVIRONMENT = jinja2.Environment(
 # If your application is not hosted on the root of your domain, apply this
 # prefix before all URLs:
 ROUTE_PREFIX = '/dschat'
-            
+
 DEFAULT_NAME = 'Anon E. Mouse'
 DEFAULT_EMAIL = 'not@authenticated.com'
 DEFAULT_TOPIC = 'chat'
@@ -25,6 +25,7 @@ DEFAULT_TOPIC = 'chat'
 REDIS_CHANNEL = 'messages'
 REDIS_ID_KEY = 'id'
 REDIS_MESSAGES_KEY = 'messages'
+
 
 class Message():
     """A main model for representing an individual sent Message."""
@@ -45,18 +46,19 @@ def encode_messages(messages):
     messages_to_encode = []
     for message in messages:
         messages_to_encode.append({
-        'id': cgi.escape(str(message.id).zfill(10)),
-        'name': cgi.escape(message.name),
-        'email': cgi.escape(message.email),
-        'date': cgi.escape(message.date.strftime('%x %X')),
-        'topic': cgi.escape(message.topic),
-        'content': cgi.escape(message.content).replace("\n", "<br>")
-    })
+            'id': cgi.escape(str(message.id).zfill(10)),
+            'name': cgi.escape(message.name),
+            'email': cgi.escape(message.email),
+            'date': cgi.escape(message.date.strftime('%x %X')),
+            'topic': cgi.escape(message.topic),
+            'content': cgi.escape(message.content).replace("\n", "<br>")
+        })
     return json.dumps(messages_to_encode)
 
 
 class MainPage(webapp2.RequestHandler):
     """Generates the main web page."""
+
     def get(self):
         topic = self.request.get('topic', DEFAULT_TOPIC)
         user = ''
@@ -67,13 +69,14 @@ class MainPage(webapp2.RequestHandler):
             'topic': urllib.quote_plus(topic),
             'route_prefix': ROUTE_PREFIX
         }
-        
+
         template = JINJA_ENVIRONMENT.get_template('index.html')
         self.response.write(template.render(template_values))
 
 
 class SendMessage(webapp2.RequestHandler):
     """Handler for the /send POST request."""
+
     def post(self):
         # Create a Message and store it in the DataStore.
         #
@@ -123,12 +126,13 @@ def handle_request(r, msg):
 
 class WebSocketConnection(webapp2.RequestHandler):
     """Handles all inbound websocket requests."""
+
     def get(self):
         # The first thing we need to do is take what seems like a normal HTTP
         # request and upgrade it to be a websocket request:
         uwsgi.websocket_handshake(os.getenv('HTTP_SEC_WEBSOCKET_KEY', ''),
                                   os.getenv('HTTP_ORIGIN', ''))
-        
+
         # Open a connection to the Redis server, and ask to be notified of any
         # messages on the channel REDIS_CHANNEL:
         r = redis.StrictRedis(host='localhost', port=6379, db=0)
@@ -199,6 +203,7 @@ real_app = webapp2.WSGIApplication([
     (ROUTE_PREFIX + '/websocket', WebSocketConnection),
 ], debug=True)
 
+
 def fake_start_response(unused1, unused2):
     pass
 
@@ -207,6 +212,8 @@ def fake_start_response(unused1, unused2):
 # calling start_response.  This generates an annoying exception.  So we provide
 # a fake start_response to webapp2 for websocket connections only.  (What a
 # gross hack, feel free to tell me a better way...)
+
+
 def app(environ, start_response):
     if environ['PATH_INFO'] == ROUTE_PREFIX + '/websocket':
         return real_app(environ, fake_start_response)

@@ -1,6 +1,6 @@
 Things I should get around to doing someday:
 
-- Fix bug that renders line breaks properly in javascript but not django
+- Add user authentication.
 
 - Create an authorized users table, and some way of either restricting the chat
   to only class members, or to block spammers.
@@ -26,8 +26,5 @@ Things I should get around to doing someday:
 - Allow users to post on a special topic named "ephemeral".  Such messages will
   not be stored on the server -- they will just be broadcast to whoever has the
   UI open and receiving messages right now.
-
-- Figure out why after a while the connection from server to client goes down
-  and doesn't come back until you reload the page.
 
 - Possible idea:  provide ability to send private messages between users.
