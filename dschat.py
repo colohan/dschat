@@ -105,28 +105,27 @@ class SendMessage(webapp2.RequestHandler):
         r.publish(REDIS_CHANNEL, encode_messages([message]))
 
 
-def handle_request(r, msg):
-    """Handle request for more messages received from websocket."""
-
-    request = json.loads(msg)
-    first = int(request["first_id"])
-    last = int(request["last_id"])
-    # Don't fetch more than 50 messages at once:
-    if (last > 0 and (last - 50 > first)) or (last < 0):
-        first = last - 50
-    pickled_messages = r.lrange(REDIS_MESSAGES_KEY, first, last)
-    messages = []
-    for pickled_message in pickled_messages:
-        message = pickle.loads(pickled_message)
-        messages.append(message)
-
-    uwsgi.websocket_send(encode_messages(messages))
-
-
 class WebSocketConnection(webapp2.RequestHandler):
     """Handles all inbound websocket requests."""
 
     def get(self):
+        def handle_request(r, msg):
+            """Handle request for more messages received from websocket."""
+        
+            request = json.loads(msg)
+            first = int(request["first_id"])
+            last = int(request["last_id"])
+            # Don't fetch more than 50 messages at once:
+            if (last > 0 and (last - 50 > first)) or (last < 0):
+                first = last - 50
+            pickled_messages = r.lrange(REDIS_MESSAGES_KEY, first, last)
+            messages = []
+            for pickled_message in pickled_messages:
+                message = pickle.loads(pickled_message)
+                messages.append(message)
+        
+            uwsgi.websocket_send(encode_messages(messages))
+
         # The first thing we need to do is take what seems like a normal HTTP
         # request and upgrade it to be a websocket request:
         uwsgi.websocket_handshake(os.getenv('HTTP_SEC_WEBSOCKET_KEY', ''),
