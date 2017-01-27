@@ -1,6 +1,14 @@
 Things I should get around to doing someday:
 
-- Fix bug that renders line breaks properly in javascript but not django
+- Add user authentication to uwsgi version.
+
+- Add search to uwsgi version.
+
+- Fix bug that renders line breaks properly in javascript but not django (or get
+  rid of use of django for messages in appengine version).
+
+- Port AppEngine version off of depricated Channel API to either websockets or
+  Firebase.
 
 - Create an authorized users table, and some way of either restricting the chat
   to only class members, or to block spammers.

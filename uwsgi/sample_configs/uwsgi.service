@@ -3,7 +3,7 @@ Description=uWSGI instance to serve dschat
 
 [Service]
 ExecStartPre=-/bin/bash -c 'mkdir -p /run/uwsgi; chown chris:www-data /run/uwsgi'
-ExecStart=/bin/bash -c 'cd /home/chris/git/dschat; uwsgi --ini dschat.ini'
+ExecStart=/bin/bash -c 'cd /home/chris/git/dschat/uwsgi; uwsgi --ini dschat.ini'
 
 [Install]
 WantedBy=multi-user.target
