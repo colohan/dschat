@@ -45,8 +45,9 @@ onMessage = function(m) {
 
 	// Now we need to figure out where to add this message.  Optimize for
 	// the common cases of it being inserted first or last:
-	if ($(".message").last().attr("data-messageid") < message.id) {
-	    $(".message").last().after(html);
+	if ($(".message").length == 0 ||
+	    $(".message").last().attr("data-messageid") < message.id) {
+	    $(".bottom").last().before(html);
 	    posted_at_bottom = true;
 
 	} else {
@@ -80,6 +81,10 @@ onMessage = function(m) {
 
 onOpen = function() {
     console.log("Channel to server opened.");
+
+    if($(".message").length == 0) {
+	fetchMoreMessages();
+    }
 }
 
 onError = function(e) {
@@ -110,6 +115,9 @@ fetchMoreMessages = function() {
     // Send a "get" request back to the server so it provides us with messages
     // older than last_id:
     var last_id = $(".message").first().attr("data-messageid")
+    if($(".message").length == 0) {
+	last_id = -1;
+    }
     $.post("get", {older_than: last_id});
 }
 

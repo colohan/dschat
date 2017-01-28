@@ -123,6 +123,7 @@ class MainPage(webapp2.RequestHandler):
         # FIXME: should clone messages array and cgi.escape all elements in it,
         # instead of relying upon JINJA to do this.  In the process, we can
         # replace newlines with <br> (see encode_message below for code).
+        messages = []
 
         template_values = {
             'user': user,
@@ -250,6 +251,8 @@ class GetMessages(webapp2.RequestHandler):
         older_than_id = self.request.get('older_than')
         older_than = datetime.datetime.strptime(older_than_id,
                                                 "%Y-%m-%dT%H:%M:%S.%f")
+        if older_than_id == -1:
+            older_than = datetime.datetime.MAXYEAR
 
         query = Message.query(ancestor=messages_key()).filter(Message.date <
                                                               older_than
