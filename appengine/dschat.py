@@ -103,31 +103,15 @@ class MainPage(webapp2.RequestHandler):
             session.email = user.email();
             session.put()
 
-        # Just fetch some messages from the past month to populate the UI.  At
-        # some point in the future we should make this customizable (perhaps
-        # after we add search functionality).
-        query = Message.query(ancestor=messages_key()).filter(
-            Message.date > (datetime.datetime.now() -
-                            datetime.timedelta(days=30))
-        ).order(-Message.date)
-        # Limit query to 50 messages in case something goes haywire.
-        query_results = query.fetch(50)
-
-        messages = []
-        for result in reversed(query_results):
-            messages.append(message_to_struct(result))
-
         topic = self.request.get('topic', DEFAULT_TOPIC)
         token = channel.create_channel(user.user_id());
             
         # FIXME: should clone messages array and cgi.escape all elements in it,
         # instead of relying upon JINJA to do this.  In the process, we can
         # replace newlines with <br> (see encode_message below for code).
-        messages = []
 
         template_values = {
             'user': user,
-            'messages': messages,
             'topic': urllib.quote_plus(topic),
             'token': token,
         }
@@ -251,8 +235,6 @@ class GetMessages(webapp2.RequestHandler):
         older_than_id = self.request.get('older_than')
         older_than = datetime.datetime.strptime(older_than_id,
                                                 "%Y-%m-%dT%H:%M:%S.%f")
-        if older_than_id == -1:
-            older_than = datetime.datetime.MAXYEAR
 
         query = Message.query(ancestor=messages_key()).filter(Message.date <
                                                               older_than
@@ -260,8 +242,11 @@ class GetMessages(webapp2.RequestHandler):
         # Limit query to 50 messages:
         query_results = query.fetch(50)
 
-        broadcast = MessagesBroadcast(query_results)
-        broadcast.send_messages(user.user_id())
+        print "results = " + str(query_results)
+
+        if len(query_results) > 0:
+            broadcast = MessagesBroadcast(query_results)
+            broadcast.send_messages(user.user_id())
 
             
 app = webapp2.WSGIApplication([

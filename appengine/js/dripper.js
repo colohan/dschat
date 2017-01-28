@@ -116,7 +116,7 @@ fetchMoreMessages = function() {
     // older than last_id:
     var last_id = $(".message").first().attr("data-messageid")
     if($(".message").length == 0) {
-	last_id = -1;
+	last_id = "2099-01-01T01:00:00.000000";
     }
     $.post("get", {older_than: last_id});
 }

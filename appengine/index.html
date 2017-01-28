@@ -28,14 +28,7 @@
   </head>
 
   <body>
-    {% for message in messages %}
-    <div class="message" data-messageid="{{ message.id|safe }}">
-    <b title="{{ message.email|safe }}">{{ message.nickname|safe }}
-      ({{ message.topic|safe }}) [{{ message.date|safe }}]
-    </b>
-    <blockquote>{{ message.content|safe }}</blockquote>
-    </div>
-    {% endfor %}
+    <div class="bottom"></div>
 
     <form action="/send" method="post" id="messageForm" onsubmit="postForm(this); document.getElementById('content').value=''; return false;">
       Topic: <input value="{{ topic }}" name="topic" id="topic">
