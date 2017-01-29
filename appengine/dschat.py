@@ -106,10 +106,6 @@ class MainPage(webapp2.RequestHandler):
         topic = self.request.get('topic', DEFAULT_TOPIC)
         token = channel.create_channel(user.user_id());
             
-        # FIXME: should clone messages array and cgi.escape all elements in it,
-        # instead of relying upon JINJA to do this.  In the process, we can
-        # replace newlines with <br> (see encode_message below for code).
-
         template_values = {
             'user': user,
             'topic': urllib.quote_plus(topic),
