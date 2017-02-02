@@ -141,10 +141,12 @@ class SearchPage(webapp2.RequestHandler):
 
         urlsafe_keys = messageindex.find(query, num_results)
 
+
         results = []
         for urlsafe_key in urlsafe_keys:
-            results.append(message_to_struct(
-                ndb.Key(urlsafe=urlsafe_key).get()))
+            result = ndb.Key(urlsafe=urlsafe_key).get()
+            if result:
+                results.append(message_to_struct(result))
 
         template_values = {
             'query': query,
@@ -237,8 +239,6 @@ class GetMessages(webapp2.RequestHandler):
         ).order(-Message.date)
         # Limit query to 50 messages:
         query_results = query.fetch(50)
-
-        print "results = " + str(query_results)
 
         if len(query_results) > 0:
             broadcast = MessagesBroadcast(query_results)
