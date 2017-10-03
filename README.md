@@ -27,8 +27,14 @@ ever, and I'll figure out what to do with that.
 
 AppEngine:
 
-If you change this app and want to test it on your local computer, use:
+If you change this app and want to test it on your local computer, you need to
+first set up Firebase (grrr, the Channel API was deprecated).  See the
+instructions here:
+https://github.com/GoogleCloudPlatform/python-docs-samples/tree/master/appengine/standard/firebase/firetactoe
 
+Then to test this program use:
+
+  export GOOGLE_APPLICATION_CREDENTIALS=/path/to/firebase_credentials.json
   dev_appserver.py .
 
 To deploy the new version to AppEngine, use:

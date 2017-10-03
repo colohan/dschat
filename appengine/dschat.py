@@ -1,22 +1,37 @@
+try:
+    from functools import lru_cache
+except ImportError:
+    from functools32 import lru_cache
+import base64
 import cgi
 import datetime
-import os
-import urllib
+import httplib2
 import jinja2
-import webapp2
-import messageindex
 import json
+import messageindex
+import os
+import re
+import time
+import urllib
+import webapp2
 
 
-from google.appengine.api import channel
+from google.appengine.api import app_identity
 from google.appengine.api import users
 from google.appengine.ext import ndb
+from oauth2client.client import GoogleCredentials
 
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
     extensions=['jinja2.ext.autoescape'],
     autoescape=True)
+
+_IDENTITY_ENDPOINT = ('https://identitytoolkit.googleapis.com/'
+                      'google.identity.identitytoolkit.v1.IdentityToolkit')
+_FIREBASE_SCOPES = [
+    'https://www.googleapis.com/auth/firebase.database',
+    'https://www.googleapis.com/auth/userinfo.email']
 
 DEFAULT_TOPIC = 'chat'
 
@@ -37,8 +52,8 @@ class Author(ndb.Model):
     identity = ndb.StringProperty(indexed=False)
     nickname = ndb.StringProperty(indexed=False)
     email = ndb.StringProperty(indexed=False)
-    
-    
+
+
 class Message(ndb.Model):
     """A main model for representing an individual sent Message."""
     author = ndb.StructuredProperty(Author)
@@ -71,8 +86,40 @@ def message_to_struct(message):
     return struct_message
 
 
+def create_custom_token(uid, valid_minutes=59):
+    """Create a secure token for the given id.
+
+    This method is used to create secure custom JWT tokens to be passed to
+    clients. It takes a unique id (user_id) that will be used by Firebase's
+    security rules to prevent unauthorized access.
+    """
+
+    # use the app_identity service from google.appengine.api to get the
+    # project's service account email automatically
+    client_email = app_identity.get_service_account_name()
+
+    now = int(time.time())
+    # encode the required claims
+    # per https://firebase.google.com/docs/auth/server/create-custom-tokens
+    payload = base64.b64encode(json.dumps({
+        'iss': client_email,
+        'sub': client_email,
+        'aud': _IDENTITY_ENDPOINT,
+        'uid': uid,  # the important parameter, as it will be the channel id
+        'iat': now,
+        'exp': now + (valid_minutes * 60),
+    }))
+    # add standard header to identify this as a JWT
+    header = base64.b64encode(json.dumps({'typ': 'JWT', 'alg': 'RS256'}))
+    to_sign = '{}.{}'.format(header, payload)
+    # Sign the jwt using the built in app_identity service
+    return '{}.{}'.format(to_sign, base64.b64encode(
+        app_identity.sign_blob(to_sign)[1]))
+
+
 class MainPage(webapp2.RequestHandler):
     """Generates the main web page."""
+
     def get(self):
         user = users.get_current_user()
         if not user:
@@ -97,21 +144,29 @@ class MainPage(webapp2.RequestHandler):
         # scaling issues in the broadcast (which we'll have to solve) long
         # before we get DoSed by inbound heartbeats.
         query = Session.query(Session.client_id == user.user_id())
-        if not query.iter().has_next():
+        if query.iter().has_next():
+            session = query.iter().next()
+        else:
             session = Session(parent=sessions_key())
             session.client_id = user.user_id();
             session.email = user.email();
             session.put()
 
         topic = self.request.get('topic', DEFAULT_TOPIC)
-        token = channel.create_channel(user.user_id());
-            
+
+        # encrypt the channel_id and send it as a custom token to the
+        # client
+        # Firebase's data security rules will be able to decrypt the
+        # token and prevent unauthorized access
+        token = create_custom_token(session.client_id)
+
         template_values = {
             'user': user,
             'topic': urllib.quote_plus(topic),
             'token': token,
+            'channel_id': user.user_id(),
         }
-        
+
         template = JINJA_ENVIRONMENT.get_template('index.html')
         self.response.write(template.render(template_values))
 
@@ -158,6 +213,36 @@ class SearchPage(webapp2.RequestHandler):
         self.response.write(template.render(template_values))
 
 
+# Memoize the value, to avoid parsing the code snippet every time
+@lru_cache()
+def _get_firebase_db_url():
+    """Grabs the databaseURL from the Firebase config snippet. Regex looks
+    scary, but all it is doing is pulling the 'databaseURL' field from the
+    Firebase javascript snippet"""
+    regex = re.compile(r'\bdatabaseURL\b.*?["\']([^"\']+)')
+    cwd = os.path.dirname(__file__)
+    try:
+        with open(os.path.join(cwd, 'index.html')) as f:
+            url = next(regex.search(line) for line in f if regex.search(
+                line))
+    except StopIteration:
+        raise ValueError(
+            'Error parsing databaseURL. Please copy Firebase web snippet '
+            'into index.html')
+    return url.group(1)
+
+# Memoize the authorized http, to avoid fetching new access tokens
+@lru_cache()
+def _get_http():
+    """Provides an authed http object."""
+    http = httplib2.Http()
+    # Use application default credentials to make the Firebase calls
+    # https://firebase.google.com/docs/reference/rest/database/user-auth
+    creds = GoogleCredentials.get_application_default().create_scoped(
+        _FIREBASE_SCOPES)
+    creds.authorize(http)
+    return http
+
 class MessagesBroadcast():
     """Given an array of messages, broadcast it to all users who have opened the UI."""
     message = None
@@ -173,7 +258,8 @@ class MessagesBroadcast():
 
     def send_messages(self, dest):
         str_message = self.encode_messages()
-        channel.send_message(dest, str_message)
+        url = '{}/channels/{}.json'.format(_get_firebase_db_url(), dest)
+        _get_http().request(url, 'PUT', body=str_message)
 
     def send(self):
         # Iterate over all logged in users and attempt to forward the message to
@@ -213,7 +299,7 @@ class SendMessage(webapp2.RequestHandler):
 
         # Index the message so it is available for future searches:
         messageindex.add(message_key.urlsafe(), message)
-        
+
         # Now that we've recorded the message in the DataStore, broadcast it to
         # all open clients.
         broadcast = MessagesBroadcast([message])
@@ -244,7 +330,7 @@ class GetMessages(webapp2.RequestHandler):
             broadcast = MessagesBroadcast(query_results)
             broadcast.send_messages(user.user_id())
 
-            
+
 app = webapp2.WSGIApplication([
     ('/', MainPage),
     ('/send', SendMessage),
