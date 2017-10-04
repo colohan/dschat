@@ -34,6 +34,8 @@ https://github.com/GoogleCloudPlatform/python-docs-samples/tree/master/appengine
 
 Then to test this program use:
 
+  cd dschat/appengine
+  pip install -t lib -r requirements.txt
   export GOOGLE_APPLICATION_CREDENTIALS=/path/to/firebase_credentials.json
   dev_appserver.py .
 
