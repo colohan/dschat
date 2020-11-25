@@ -29,10 +29,7 @@ onKeyDown = function(e) {
 }
 
 // Called every time a new message shows up from the server:
-onMessage = function(m) {
-    // Parse the message received from the server:
-    var messages = JSON.parse(m.data);
-
+onMessage = function(messages) {
     var posted_at_bottom = false;
     var height_before = $(document).height();
     for (var i = 0; i < messages.length; i++) {
@@ -79,7 +76,7 @@ onMessage = function(m) {
     
 }
 
-onOpen = function() {
+onOpened = function() {
     console.log("Channel to server opened.");
 
     if($(".message").length == 0) {
@@ -87,28 +84,29 @@ onOpen = function() {
     }
 }
 
-onError = function(e) {
-    console.log("Error taking to server: " + e.description + " [code: " +
-		e.code + "].");
-}
-
-onClose = function() {
-    console.log("Channel to server closed");
-    
-    // Just sleep 5s and retry:
-    setTimeout(openChannel, 5000);
-}
 
 // Initialization, called once upon page load:
 openChannel = function() {
-    var channel = new goog.appengine.Channel(token);
-    var handler = {
-        'onopen': onOpen,
-        'onmessage': onMessage,
-        'onerror': onError,
-        'onclose': onClose
-    };
-    var socket = channel.open(handler);
+    // [START auth_login]
+    // sign into Firebase with the token passed from the server
+    firebase.auth().signInWithCustomToken(token).catch(function(error) {
+	console.log('Login Failed!', error.code);
+	console.log('Error message: ', error.message);
+	console.log('Token: ', token);
+    });
+    // [END auth_login]
+
+    // [START add_listener]
+    // setup a database reference at path /channels/channelId
+    channel = firebase.database().ref('channels/' + channelId);
+    // add a listener to the path that fires any time the value of the data
+    // changes
+    channel.on('value', function(data) {
+	onMessage(data.val());
+    });
+    // [END add_listener]
+    onOpened();
+    // let the server know that the channel is open
 }
 
 fetchMoreMessages = function() {

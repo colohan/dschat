@@ -3,12 +3,22 @@
 <html>
   <head>
     <script src="https://code.jquery.com/jquery-3.1.0.min.js"></script>
-    <!-- Google's channel API, used by the dripper to receive messages as they
-      -- come in: -->
-    <script src='/_ah/channel/jsapi'></script>
+    <script src="https://www.gstatic.com/firebasejs/4.3.1/firebase.js"></script>
     <script>
       var token = '{{ token }}';
+      var channelId = '{{ channel_id }}';
+      // Initialize Firebase
+      var config = {
+      apiKey: "AIzaSyAzRdZTN_YWFH_vK78G0VLqi5-CiGDNyYs",
+      authDomain: "distributedchat.firebaseapp.com",
+      databaseURL: "https://distributedchat.firebaseio.com",
+      projectId: "distributedchat",
+      storageBucket: "distributedchat.appspot.com",
+      messagingSenderId: "301674088655"
+      };
+      firebase.initializeApp(config);
     </script>
+
     <script src='js/dripper.js'></script>
 
     <link type="image/x-icon" rel="shortcut icon" href="/public/z16.ico" />
